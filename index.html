@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AREWA SQUARE — Northern Nigeria's Marketplace</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Nheaunito:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1221,6 +1221,10 @@
     @media (min-width: 769px) {
       .bottom-nav { display: none; }
     }
+    @media (max-width: 768px) {
+      body { padding-bottom: 76px; } /* clears the fixed bottom nav so content/footer isn't hidden underneath it */
+    }
+
     @media (min-width: 860px) {
       .app-bar-actions { margin-right: 4px; }
     }
@@ -1348,7 +1352,7 @@
         <span></span><span></span><span></span>
       </button>
       <a href="./index.html" class="nav-logo">
-        <img src="Logo.png" alt="AREWA SQUARE Logo" onerror="this.style.display='none'"/>
+        <img src="./Logo.png" alt="AREWA SQUARE Logo" onerror="this.style.display='none'"/>
       </a>
       <nav class="desktop-nav-links">
         <a href="./index.html" class="active">Home</a>
@@ -1533,7 +1537,7 @@
     <div class="banner-carousel">
       <div class="banner-track" id="banner-track">
         <a href="#shops" class="banner-slide">
-          <img src="Banner.png"
+          <img src="./Banner.png"
                alt="Start Shopping Online in your area today with Arewa Square"
                onerror="this.style.display='none';document.getElementById('banner-fallback').classList.add('visible')"/>
         </a>
@@ -1731,18 +1735,18 @@
       <a href="#" onclick="filterShopsByCategory('');return false;" class="view-all-link">View All</a>
     </div>
     <div class="categories-grid">
-      <div class="cat-card" onclick="filterShopsByCategory('Food, Grains &amp; Spices')"><span class="cat-icon-badge" style="background:#E8F5E1;">🧺</span><span>Food &amp; Groceries</span><span class="cat-count">—</span></div>
+      <div class="cat-card" onclick="filterShopsByCategory('Food, Grains &amp; Spices')"><span class="cat-icon-badge" style="background:#E8F5E1;">🌾</span><span>Food, Grains &amp; Spices</span><span class="cat-count">—</span></div>
       <div class="cat-card" onclick="filterShopsByCategory('Beauty &amp; Personal Care')"><span class="cat-icon-badge" style="background:#FCE4EC;">💄</span><span>Beauty &amp; Personal Care</span><span class="cat-count">—</span></div>
       <div class="cat-card" onclick="filterShopsByCategory('Household &amp; Cleaning Supplies')"><span class="cat-icon-badge" style="background:#E0F7F5;">🧴</span><span>Household &amp; Cleaning</span><span class="cat-count">—</span></div>
-      <div class="cat-card" onclick="filterShopsByCategory('Health &amp; Pharmacy')"><span class="cat-icon-badge" style="background:#FDEAEA;">💊</span><span>Health &amp; Pharmacy</span><span class="cat-count">—</span></div>
+      <div class="cat-card" onclick="filterShopsByCategory('Health &amp; Wellness')"><span class="cat-icon-badge" style="background:#FDEAEA;">💊</span><span>Health &amp; Wellness</span><span class="cat-count">—</span></div>
       <div class="cat-card" onclick="filterShopsByCategory('Fashion &amp; Clothing')"><span class="cat-icon-badge" style="background:#E3F0FC;">👕</span><span>Fashion &amp; Clothing</span><span class="cat-count">—</span></div>
       <div class="cat-card" onclick="filterShopsByCategory('Baby &amp; Kids')"><span class="cat-icon-badge" style="background:#FFF6DE;">🧸</span><span>Baby &amp; Kids</span><span class="cat-count">—</span></div>
       <div class="cat-card" onclick="filterShopsByCategory('Phones &amp; Electronics')"><span class="cat-icon-badge" style="background:#EFE7FB;">📱</span><span>Phones &amp; Electronics</span><span class="cat-count">—</span></div>
       <div class="cat-card" onclick="filterShopsByCategory('Farm Products')"><span class="cat-icon-badge" style="background:#F5EDE1;">🫘</span><span>Farm Products</span><span class="cat-count">—</span></div>
       <div class="cat-card" onclick="filterShopsByCategory('Home &amp; Furniture')"><span class="cat-icon-badge" style="background:#FDEEE0;">🛋️</span><span>Home &amp; Furniture</span><span class="cat-count">—</span></div>
-      <div class="cat-card" onclick="filterShopsByCategory('Building Materials &amp; Hardware')"><span class="cat-icon-badge" style="background:#EEF0F2;">🧱</span><span>Building Materials</span><span class="cat-count">—</span></div>
-      <div class="cat-card" onclick="filterShopsByCategory('Vehicles &amp; Spare Parts')"><span class="cat-icon-badge" style="background:#E5EEF7;">🚗</span><span>Vehicles Spare Parts</span><span class="cat-count">—</span></div>
-      <div class="cat-card" onclick="filterShopsByCategory('Industrial Machines')"><span class="cat-icon-badge" style="background:#E9EBEE;">⚙️</span><span>Industrial Machines</span><span class="cat-count">—</span></div>
+      <div class="cat-card" onclick="filterShopsByCategory('Building Materials &amp; Hardware')"><span class="cat-icon-badge" style="background:#EEF0F2;">🧱</span><span>Building &amp; Hardware</span><span class="cat-count">—</span></div>
+      <div class="cat-card" onclick="filterShopsByCategory('Vehicles &amp; Spare Parts')"><span class="cat-icon-badge" style="background:#E5EEF7;">🚗</span><span>Vehicles &amp; Spare Parts</span><span class="cat-count">—</span></div>
+      <div class="cat-card" onclick="filterShopsByCategory('Business &amp; Industrial Equipment')"><span class="cat-icon-badge" style="background:#E9EBEE;">⚙️</span><span>Business &amp; Industrial</span><span class="cat-count">—</span></div>
       <div class="cat-card" onclick="filterShopsByCategory('Books, Office &amp; School Supplies')"><span class="cat-icon-badge" style="background:#EAE8FB;">📚</span><span>Books &amp; School Supplies</span><span class="cat-count">—</span></div>
       <div class="cat-card" onclick="filterShopsByCategory('Sports &amp; Outdoor')"><span class="cat-icon-badge" style="background:#E4F7EE;">⚽</span><span>Sports &amp; Outdoor</span><span class="cat-count">—</span></div>
     </div>
@@ -1986,7 +1990,7 @@
 
   <!-- ══ REAL SHOPS LOADER + GPS ══ -->
   <script>
-    const _HOME_API = 'https://arewa-plazabackend-production.up.railway.app/api';
+    const _HOME_API = 'https://arewa-square-backend-production.up.railway.app/api';
     let _allHomeShops = [];
     let _buyerLat = null;
     let _buyerLng = null;

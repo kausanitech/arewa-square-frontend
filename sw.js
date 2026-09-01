@@ -12,7 +12,7 @@
 // ══════════════════════════════════════════════════════════
 
 const CACHE_VERSION = 'arewa-square-v1';
-const API_HOST = 'arewa-plazabackend-production.up.railway.app';
+const API_HOST = 'arewa-square-backend-production.up.railway.app';
 
 const APP_SHELL = [
   './index.html',

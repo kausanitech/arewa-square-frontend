@@ -865,7 +865,7 @@
 
       showToast('Creating your account…', 'info');
       try {
-        const res  = await fetch('https://arewa-plazabackend-production.up.railway.app/api/auth/register', {
+        const res  = await fetch('https://arewa-square-backend-production.up.railway.app/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fullName: fullname.trim(), email, phone, password: pass, state, city, role: 'buyer' })
@@ -964,7 +964,7 @@
         if (govId)     fd.append('govId',     govId);
         if (shopPhoto) fd.append('shopPhoto', shopPhoto);
 
-        const res  = await fetch('https://arewa-plazabackend-production.up.railway.app/api/auth/register', {
+        const res  = await fetch('https://arewa-square-backend-production.up.railway.app/api/auth/register', {
           method: 'POST',
           body: fd
         });
@@ -1023,7 +1023,7 @@
 
       showToast('Logging in…', 'info');
       try {
-        const res  = await fetch('https://arewa-plazabackend-production.up.railway.app/api/auth/login', {
+        const res  = await fetch('https://arewa-square-backend-production.up.railway.app/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password })
