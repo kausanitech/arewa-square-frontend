@@ -1,0 +1,12 @@
+# AREWA SQUARE — robots.txt
+# Replace https://arewasquare.com below with your real domain if different.
+
+User-agent: *
+Allow: /
+Disallow: /buyer-dashboard.html
+Disallow: /seller-dashboard.html
+Disallow: /admin.html
+Disallow: /admin-payments.html
+Disallow: /auth.html
+
+Sitemap: https://arewasquare.com/sitemap.xml

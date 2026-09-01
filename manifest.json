@@ -1,0 +1,48 @@
+{
+  "name": "AREWA SQUARE — Northern Nigeria's Marketplace",
+  "short_name": "AREWA SQUARE",
+  "description": "Shop Local, Shop Arewa. Discover verified local shops near you across Northern Nigeria.",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#001233",
+  "theme_color": "#001233",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["shopping", "business", "lifestyle"],
+  "icons": [
+    {
+      "src": "/Logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Shops",
+      "short_name": "Browse",
+      "url": "/buyer-dashboard.html",
+      "icons": [{ "src": "/Logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Shop",
+      "short_name": "Sell",
+      "url": "/seller-dashboard.html",
+      "icons": [{ "src": "/Logo.png", "sizes": "192x192" }]
+    }
+  ]
+}
