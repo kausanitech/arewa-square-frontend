@@ -740,7 +740,7 @@
           <p class="card-subtitle">Login to your AREWA SQUARE account.</p>
           <div class="form-group">
             <label>Email Address <span class="required">*</span></label>
-            <input type="email" placeholder="your@email.com"/>
+            <input type="email" id="login-email" placeholder="your@email.com"/>
           </div>
           <div class="form-group">
             <label>Password <span class="required">*</span></label>
@@ -1015,8 +1015,8 @@
     }
 
     async function handleLoginRedirect() {
-      const email    = document.getElementById('login-email')?.value.trim() || document.querySelector('#page-login input[type="email"]')?.value.trim() || '';
-      const password = document.querySelector('#page-login input[type="password"]')?.value || '';
+      const email    = document.getElementById('login-email')?.value.trim() || '';
+      const password = document.getElementById('login-pass')?.value || '';
 
       if (!validateEmail(email)) { showToast('Please enter a valid email address', 'error'); return; }
       if (!password)             { showToast('Please enter your password', 'error');         return; }
