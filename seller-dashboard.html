@@ -944,7 +944,7 @@
 
     async function saveShopProfile() {
       if (!mySeller) return;
-      const body = {
+      const fields = {
         businessName:   document.getElementById('myshop-name')?.value.trim(),
         category:       document.getElementById('myshop-category')?.value,
         state:          document.getElementById('myshop-state')?.value,
@@ -954,14 +954,32 @@
         whatsappNumber: document.getElementById('myshop-whatsapp')?.value.trim(),
       };
       if (_myShopLat !== null && _myShopLng !== null) {
-        body.latitude = _myShopLat;
-        body.longitude = _myShopLng;
+        fields.latitude = _myShopLat;
+        fields.longitude = _myShopLng;
       }
+
+      // If a new banner/shop photo was picked, send everything as multipart
+      // so the file actually reaches the backend — plain JSON can't carry a
+      // file. Otherwise, plain JSON is simpler and works exactly as before.
+      const bannerInput = document.getElementById('banner-upload');
+      const bannerFile = bannerInput?.files?.[0] || null;
+
+      let fetchOptions;
+      if (bannerFile) {
+        const fd = new FormData();
+        Object.entries(fields).forEach(([k, v]) => { if (v !== undefined && v !== null) fd.append(k, v); });
+        fd.append('shopPhoto', bannerFile);
+        fetchOptions = { method: 'PUT', headers: _headers(true), body: fd }; // skipContentType: true — the browser sets the correct multipart boundary itself
+      } else {
+        fetchOptions = { method: 'PUT', headers: _headers(), body: JSON.stringify(fields) };
+      }
+
       try {
-        const res  = await fetch(_API + '/sellers/profile', { method: 'PUT', headers: _headers(), body: JSON.stringify(body) });
+        const res  = await fetch(_API + '/sellers/profile', fetchOptions);
         const data = await res.json();
         if (!res.ok) { showToast(data.message || 'Failed to save changes.', 'error'); return; }
         showToast('✅ Shop profile updated!', 'success');
+        if (bannerInput) bannerInput.value = ''; // clear the picked file now that it's been uploaded
         loadRealSeller();
       } catch(e) { showToast('Connection error. Try again.', 'error'); }
     }
