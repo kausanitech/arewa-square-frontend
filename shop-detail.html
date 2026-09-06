@@ -73,9 +73,13 @@
   .sd-photo {
     position: relative;
     height: 150px;
-    background: var(--navy-light) center/cover no-repeat;
+    background: var(--navy-light);
     display: flex; align-items: center; justify-content: center;
     font-size: 3rem;
+    overflow: hidden;
+  }
+  .sd-photo img {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
   }
   .sd-photo .sd-num {
     position: absolute; top: 10px; left: 10px;
@@ -137,8 +141,36 @@
   }
   .p-thumb {
     height: 90px; background: var(--bg); display: flex; align-items: center;
-    justify-content: center; font-size: 1.8rem;
+    justify-content: center; font-size: 1.8rem; overflow: hidden;
   }
+  .p-thumb-count {
+    position: absolute; bottom: 4px; right: 4px;
+    background: rgba(0,0,0,0.65); color: #fff; font-size: 0.6rem; font-weight: 700;
+    padding: 2px 6px; border-radius: 10px;
+  }
+  .gallery-overlay {
+    display: none; position: fixed; inset: 0; z-index: 2000;
+    background: rgba(0,0,0,0.92); align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+  .gallery-overlay.open { display: flex; }
+  .gallery-close {
+    position: absolute; top: 16px; right: 20px; background: rgba(255,255,255,0.12);
+    border: none; color: #fff; width: 38px; height: 38px; border-radius: 50%;
+    font-size: 1.2rem; cursor: pointer; z-index: 2;
+  }
+  .gallery-stage { position: relative; width: 100%; max-width: 520px; display: flex; align-items: center; justify-content: center; padding: 0 12px; }
+  .gallery-stage img { max-width: 100%; max-height: 70vh; border-radius: 8px; object-fit: contain; }
+  .gallery-arrow {
+    background: rgba(255,255,255,0.12); border: none; color: #fff;
+    width: 42px; height: 42px; border-radius: 50%; font-size: 1.3rem; cursor: pointer;
+    flex-shrink: 0; margin: 0 6px;
+  }
+  .gallery-arrow:disabled { opacity: 0.25; cursor: default; }
+  .gallery-counter { color: rgba(255,255,255,0.75); font-size: 0.82rem; margin-top: 16px; font-weight: 600; }
+  .gallery-dots { display: flex; gap: 6px; margin-top: 10px; }
+  .gallery-dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3); }
+  .gallery-dots span.active { background: var(--gold); }
   .p-info { padding: 10px 10px 12px; }
   .p-info .p-name { font-size: 0.78rem; font-weight: 700; color: var(--white); margin-bottom: 4px; line-height: 1.3; }
   .p-info .p-price { font-size: 0.82rem; font-weight: 800; color: var(--gold-dim); }
@@ -269,8 +301,12 @@
 
       const photoEl = document.getElementById('sd-photo');
       if (s.shopPhotoUrl) {
-        photoEl.style.backgroundImage = `url('${s.shopPhotoUrl}')`;
         photoEl.textContent = '';
+        const img = document.createElement('img');
+        img.src = s.shopPhotoUrl;
+        img.alt = s.businessName || 'Shop photo';
+        img.onerror = () => { img.remove(); photoEl.textContent = _catIcon(s.category); };
+        photoEl.appendChild(img);
         const numBadge = document.createElement('span');
         numBadge.className = 'sd-num';
         numBadge.textContent = _formatShopNum(s.shopNumber);
@@ -304,29 +340,72 @@
       }
     }
 
+    let _sdProducts = [];
+
     async function loadProducts(sellerId) {
       const grid = document.getElementById('sd-products');
       try {
         const res = await fetch(_API + '/products?sellerId=' + sellerId);
         const data = await res.json();
         const products = data.products || data || [];
+        _sdProducts = products;
         if (!products.length) {
           grid.innerHTML = '<p class="sd-empty">This shop hasn\'t listed any products yet.</p>';
           return;
         }
-        grid.innerHTML = products.map(p => `
+        grid.innerHTML = products.map((p, idx) => {
+          const hasImages = p.images && p.images.length > 0;
+          const hasMultiple = hasImages && p.images.length > 1;
+          return `
           <div class="p-card">
-            <div class="p-thumb">${p.images && p.images.length > 0 ? `<img src="${p.images[0]}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentNode.textContent='${_catIcon(p.category)}'">` : _catIcon(p.category)}</div>
+            <div class="p-thumb" ${hasImages ? `onclick="openProductGallery(${idx})" style="cursor:pointer;position:relative;"` : ''}>${hasImages ? `<img src="${p.images[0]}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentNode.textContent='${_catIcon(p.category)}'">` : _catIcon(p.category)}${hasMultiple ? `<span class="p-thumb-count">📷 ${p.images.length}</span>` : ''}</div>
             <div class="p-info">
               <div class="p-name">${p.name}</div>
               <div class="p-price">₦${Number(p.price || 0).toLocaleString()}</div>
             </div>
           </div>
-        `).join('');
+        `;}).join('');
       } catch (e) {
         grid.innerHTML = '<p class="sd-empty">Unable to load products right now.</p>';
       }
     }
+
+    // ── PRODUCT PHOTO GALLERY ──
+    let _galleryImages = [];
+    let _galleryIndex = 0;
+
+    function openProductGallery(productIdx) {
+      const product = _sdProducts[productIdx];
+      if (!product || !product.images || !product.images.length) return;
+      _galleryImages = product.images;
+      _galleryIndex = 0;
+      renderGallery();
+      document.getElementById('gallery-overlay').classList.add('open');
+    }
+    function closeProductGallery() {
+      document.getElementById('gallery-overlay').classList.remove('open');
+    }
+    function galleryStep(dir) {
+      const next = _galleryIndex + dir;
+      if (next < 0 || next >= _galleryImages.length) return;
+      _galleryIndex = next;
+      renderGallery();
+    }
+    function renderGallery() {
+      document.getElementById('gallery-img').src = _galleryImages[_galleryIndex];
+      document.getElementById('gallery-counter').textContent = (_galleryIndex + 1) + ' of ' + _galleryImages.length;
+      document.getElementById('gallery-prev').disabled = _galleryIndex === 0;
+      document.getElementById('gallery-next').disabled = _galleryIndex === _galleryImages.length - 1;
+      document.getElementById('gallery-dots').innerHTML = _galleryImages.map((_, i) =>
+        `<span class="${i === _galleryIndex ? 'active' : ''}"></span>`
+      ).join('');
+    }
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('gallery-overlay').classList.contains('open')) return;
+      if (e.key === 'Escape') closeProductGallery();
+      if (e.key === 'ArrowLeft') galleryStep(-1);
+      if (e.key === 'ArrowRight') galleryStep(1);
+    });
 
     function shareShop() {
       const url = window.location.href;
@@ -339,5 +418,17 @@
 
     loadShop();
   </script>
+  <!-- PRODUCT PHOTO GALLERY -->
+  <div class="gallery-overlay" id="gallery-overlay" onclick="if(event.target===this) closeProductGallery()">
+    <button class="gallery-close" onclick="closeProductGallery()" aria-label="Close">✕</button>
+    <div class="gallery-stage">
+      <button class="gallery-arrow" id="gallery-prev" onclick="galleryStep(-1)" aria-label="Previous photo">‹</button>
+      <img id="gallery-img" src="" alt="Product photo"/>
+      <button class="gallery-arrow" id="gallery-next" onclick="galleryStep(1)" aria-label="Next photo">›</button>
+    </div>
+    <div class="gallery-counter" id="gallery-counter"></div>
+    <div class="gallery-dots" id="gallery-dots"></div>
+  </div>
+
 </body>
 </html>

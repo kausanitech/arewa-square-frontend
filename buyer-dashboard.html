@@ -441,8 +441,38 @@
     .product-img {
       height: 70px; background: linear-gradient(135deg, var(--green-mid), var(--green-light));
       display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
-      overflow: hidden;
+      overflow: hidden; position: relative;
     }
+    .product-img-count {
+      position: absolute; bottom: 4px; right: 4px;
+      background: rgba(0,0,0,0.65); color: #fff; font-size: 0.6rem; font-weight: 700;
+      padding: 2px 6px; border-radius: 10px;
+    }
+
+    /* ── PRODUCT PHOTO GALLERY (lightbox) ── */
+    .gallery-overlay {
+      display: none; position: fixed; inset: 0; z-index: 2000;
+      background: rgba(0,0,0,0.92); align-items: center; justify-content: center;
+      flex-direction: column;
+    }
+    .gallery-overlay.open { display: flex; }
+    .gallery-close {
+      position: absolute; top: 16px; right: 20px; background: rgba(255,255,255,0.12);
+      border: none; color: #fff; width: 38px; height: 38px; border-radius: 50%;
+      font-size: 1.2rem; cursor: pointer; z-index: 2;
+    }
+    .gallery-stage { position: relative; width: 100%; max-width: 520px; display: flex; align-items: center; justify-content: center; padding: 0 12px; }
+    .gallery-stage img { max-width: 100%; max-height: 70vh; border-radius: 8px; object-fit: contain; }
+    .gallery-arrow {
+      background: rgba(255,255,255,0.12); border: none; color: #fff;
+      width: 42px; height: 42px; border-radius: 50%; font-size: 1.3rem; cursor: pointer;
+      flex-shrink: 0; margin: 0 6px;
+    }
+    .gallery-arrow:disabled { opacity: 0.25; cursor: default; }
+    .gallery-counter { color: rgba(255,255,255,0.75); font-size: 0.82rem; margin-top: 16px; font-weight: 600; }
+    .gallery-dots { display: flex; gap: 6px; margin-top: 10px; }
+    .gallery-dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3); }
+    .gallery-dots span.active { background: var(--gold); }
     .product-info { padding: 8px; }
     .product-info p { font-size: 0.72rem; color: var(--white-dim); margin-bottom: 2px; }
     .product-info strong { font-size: 0.78rem; color: var(--gold); }
@@ -1097,6 +1127,7 @@
         const data = await res.json();
         const products = (data.products || data || []).map(p => ({
           icon: _catIcon(p.category),
+          images: (p.images && p.images.length > 0) ? p.images : [],
           image: p.images && p.images.length > 0 ? p.images[0] : null,
           name: p.name,
           price: p.price,
@@ -1153,6 +1184,49 @@
 
     // ── CART STATE ──
     let cart = { shopId: null, shopNum: null, shopName: null, shopPhone: null, items: [] };
+
+    // ── PRODUCT PHOTO GALLERY ──
+    let _currentModalProducts = [];
+    let _galleryImages = [];
+    let _galleryIndex = 0;
+
+    function openProductGallery(productIdx) {
+      const product = _currentModalProducts[productIdx];
+      if (!product || !product.images.length) return;
+      _galleryImages = product.images;
+      _galleryIndex = 0;
+      renderGallery();
+      document.getElementById('gallery-overlay').classList.add('open');
+    }
+
+    function closeProductGallery() {
+      document.getElementById('gallery-overlay').classList.remove('open');
+    }
+
+    function galleryStep(dir) {
+      const next = _galleryIndex + dir;
+      if (next < 0 || next >= _galleryImages.length) return;
+      _galleryIndex = next;
+      renderGallery();
+    }
+
+    function renderGallery() {
+      document.getElementById('gallery-img').src = _galleryImages[_galleryIndex];
+      document.getElementById('gallery-counter').textContent = (_galleryIndex + 1) + ' of ' + _galleryImages.length;
+      document.getElementById('gallery-prev').disabled = _galleryIndex === 0;
+      document.getElementById('gallery-next').disabled = _galleryIndex === _galleryImages.length - 1;
+      document.getElementById('gallery-dots').innerHTML = _galleryImages.map((_, i) =>
+        `<span class="${i === _galleryIndex ? 'active' : ''}"></span>`
+      ).join('');
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('gallery-overlay').classList.contains('open')) return;
+      if (e.key === 'Escape') closeProductGallery();
+      if (e.key === 'ArrowLeft') galleryStep(-1);
+      if (e.key === 'ArrowRight') galleryStep(1);
+    });
+
 
     function formatPrice(n) {
       return '₦' + n.toLocaleString('en-NG');
@@ -1455,16 +1529,18 @@
       document.getElementById('shop-modal').classList.add('open');
 
       const products = await loadProductsForShop(s._id);
+      _currentModalProducts = products;
 
       if (!products.length) {
         document.getElementById('modal-products').innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--white-dim);padding:20px;">This shop hasn\'t listed any products yet.</p>';
         return;
       }
 
-      document.getElementById('modal-products').innerHTML = products.map(p => {
+      document.getElementById('modal-products').innerHTML = products.map((p, idx) => {
         const inCart = cart.items.find(i => i.name === p.name);
+        const hasMultiple = p.images.length > 1;
         return `<div class="product-card">
-          <div class="product-img">${p.image ? `<img src="${p.image}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentNode.textContent='${p.icon}'">` : p.icon}</div>
+          <div class="product-img" ${p.images.length > 0 ? `onclick="event.stopPropagation(); openProductGallery(${idx})" style="cursor:pointer;"` : ''}>${p.image ? `<img src="${p.image}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentNode.textContent='${p.icon}'">` : p.icon}${hasMultiple ? `<span class="product-img-count">📷 ${p.images.length}</span>` : ''}</div>
           <div class="product-info">
             <p>${p.name}</p>
             <strong>${formatPrice(p.price)}</strong>
@@ -1591,6 +1667,18 @@
     });
   }
 </script>
+  <!-- PRODUCT PHOTO GALLERY -->
+  <div class="gallery-overlay" id="gallery-overlay" onclick="if(event.target===this) closeProductGallery()">
+    <button class="gallery-close" onclick="closeProductGallery()" aria-label="Close">✕</button>
+    <div class="gallery-stage">
+      <button class="gallery-arrow" id="gallery-prev" onclick="galleryStep(-1)" aria-label="Previous photo">‹</button>
+      <img id="gallery-img" src="" alt="Product photo"/>
+      <button class="gallery-arrow" id="gallery-next" onclick="galleryStep(1)" aria-label="Next photo">›</button>
+    </div>
+    <div class="gallery-counter" id="gallery-counter"></div>
+    <div class="gallery-dots" id="gallery-dots"></div>
+  </div>
+
 </body>
 
 </html>
