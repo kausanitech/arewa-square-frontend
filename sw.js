@@ -17,6 +17,7 @@ const API_HOST = 'arewa-square-backend-production.up.railway.app';
 const APP_SHELL = [
   './index.html',
   './auth.html',
+  './reset-password.html',
   './buyer-dashboard.html',
   './seller-dashboard.html',
   './shop-detail.html',
