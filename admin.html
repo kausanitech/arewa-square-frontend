@@ -859,8 +859,8 @@
       </div>
       <div class="admin-table-wrap">
         <table class="admin-table">
-          <thead><tr><th>Name</th><th>Phone</th><th>Location</th><th>Joined</th></tr></thead>
-          <tbody id="buyers-body"><tr class="empty-row"><td colspan="4">Loading…</td></tr></tbody>
+          <thead><tr><th>Name</th><th>Phone</th><th>Location</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="buyers-body"><tr class="empty-row"><td colspan="6">Loading…</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -910,6 +910,62 @@
         <div class="modal-footer-row" style="margin-top:16px;">
           <button class="btn-cancel" onclick="closeSuspendModal()">Cancel</button>
           <button class="btn-confirm-danger" id="suspend-confirm-btn" onclick="submitSuspendToggle()">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELETE CONFIRMATION — requires typing the exact name, since this is irreversible -->
+  <div class="modal-overlay" id="delete-modal">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <h3>Delete Account</h3>
+        <button class="modal-close" onclick="closeDeleteModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.85rem;color:var(--white-dim);line-height:1.6;">
+          This cannot be undone. If this account has order history, it will be anonymized and permanently locked instead of removed, so past orders stay intact.
+        </p>
+        <p style="font-size:0.85rem;margin:12px 0 8px;">Type <strong id="delete-modal-name" style="color:var(--white);"></strong> below to confirm:</p>
+        <input type="text" id="delete-confirm-input" class="reject-reason" style="min-height:auto;padding:10px 12px;" placeholder="Type the exact name"/>
+        <div class="modal-footer-row" style="margin-top:16px;">
+          <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+          <button class="btn-confirm-danger" onclick="submitDelete()">Delete Permanently</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUYER ORDER HISTORY -->
+  <div class="modal-overlay" id="buyer-orders-modal">
+    <div class="modal" style="max-width:440px;">
+      <div class="modal-header">
+        <h3>Orders — <span id="buyer-orders-name"></span></h3>
+        <button class="modal-close" onclick="closeBuyerOrdersModal()">✕</button>
+      </div>
+      <div class="modal-body" id="buyer-orders-body" style="max-height:60vh;overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <!-- EDIT SELLER -->
+  <div class="modal-overlay" id="edit-seller-modal">
+    <div class="modal" style="max-width:460px;">
+      <div class="modal-header">
+        <h3>Edit Shop Details</h3>
+        <button class="modal-close" onclick="closeEditSellerModal()">✕</button>
+      </div>
+      <div class="modal-body" style="max-height:65vh;overflow-y:auto;">
+        <input type="hidden" id="edit-seller-id"/>
+        <div class="form-group"><label>Shop Name</label><input type="text" id="edit-seller-name"/></div>
+        <div class="form-group"><label>Category</label><input type="text" id="edit-seller-category"/></div>
+        <div class="form-group"><label>State</label><input type="text" id="edit-seller-state"/></div>
+        <div class="form-group"><label>City</label><input type="text" id="edit-seller-city"/></div>
+        <div class="form-group"><label>Address</label><input type="text" id="edit-seller-address"/></div>
+        <div class="form-group"><label>WhatsApp Number</label><input type="text" id="edit-seller-whatsapp"/></div>
+        <div class="form-group"><label>Description</label><textarea id="edit-seller-desc" class="reject-reason" style="min-height:70px;"></textarea></div>
+        <div class="modal-footer-row" style="margin-top:6px;">
+          <button class="btn-cancel" onclick="closeEditSellerModal()">Cancel</button>
+          <button class="btn-confirm-danger" style="background:var(--gold);color:var(--dark);" onclick="submitEditSeller()">Save Changes</button>
         </div>
       </div>
     </div>
@@ -1109,8 +1165,8 @@
       body.innerHTML = list.map(s => {
         const st = statusOf(s);
         let actions = '';
-        if (st === 'approved') actions = `<button class="act-btn act-suspend" onclick="openSuspendModal('${s._id}','${(s.businessName||'this shop').replace(/'/g,"\\'")}','suspend')">⏸ Suspend</button>`;
-        else if (st === 'suspended') actions = `<button class="act-btn act-approve" onclick="openSuspendModal('${s._id}','${(s.businessName||'this shop').replace(/'/g,"\\'")}','reactivate')">▶ Reactivate</button>`;
+        if (st === 'approved') actions = `<button class="act-btn act-suspend" onclick="openSuspendModal('${s._id}','${(s.businessName||'this shop').replace(/'/g,"\\'")}','suspend','sellers')">⏸ Suspend</button>`;
+        else if (st === 'suspended') actions = `<button class="act-btn act-approve" onclick="openSuspendModal('${s._id}','${(s.businessName||'this shop').replace(/'/g,"\\'")}','reactivate','sellers')">▶ Reactivate</button>`;
         else if (st === 'pending') actions = `<button class="act-btn act-approve" onclick="approveSeller('${s._id}')">✓ Approve</button><button class="act-btn act-reject" onclick="openRejectModal('${s._id}','${(s.businessName||'this shop').replace(/'/g,"\\'")}')">✕ Reject</button>`;
         else actions = `<span style="color:var(--white-dim);font-size:0.75rem;">—</span>`;
         return `<tr data-search="${(s.businessName||'').toLowerCase()} ${(s.category||'').toLowerCase()}">
@@ -1118,22 +1174,29 @@
           <td>${s.category || '—'}</td>
           <td>${s.city || s.address || s.state || '—'}</td>
           <td>${statusPillHtml(s)}</td>
-          <td><div class="row-actions">${actions}<a class="act-btn act-view" href="shop-detail.html?id=${s._id}" target="_blank">👁 View</a></div></td>
+          <td><div class="row-actions">${actions}<button class="act-btn act-view" onclick="openEditSellerModal('${s._id}')">✎ Edit</button><a class="act-btn act-view" href="shop-detail.html?id=${s._id}" target="_blank">👁 View</a><button class="act-btn act-reject" onclick="openDeleteModal('${s._id}','${(s.businessName||'this shop').replace(/'/g,"\\'")}','sellers')">🗑 Delete</button></div></td>
         </tr>`;
       }).join('');
     }
 
     function renderBuyersTable() {
       const body = document.getElementById('buyers-body');
-      if (!allBuyers.length) { body.innerHTML = '<tr class="empty-row"><td colspan="4">No buyer data to show yet.</td></tr>'; return; }
-      body.innerHTML = allBuyers.map(b => `
+      if (!allBuyers.length) { body.innerHTML = '<tr class="empty-row"><td colspan="6">No buyer data to show yet.</td></tr>'; return; }
+      body.innerHTML = allBuyers.map(b => {
+        const suspended = !!b.isSuspended;
+        const suspendAction = suspended
+          ? `<button class="act-btn act-approve" onclick="openSuspendModal('${b._id}','${(b.name||b.fullName||'this buyer').replace(/'/g,"\\'")}','reactivate','buyers')">▶ Reactivate</button>`
+          : `<button class="act-btn act-suspend" onclick="openSuspendModal('${b._id}','${(b.name||b.fullName||'this buyer').replace(/'/g,"\\'")}','suspend','buyers')">⏸ Suspend</button>`;
+        return `
         <tr data-search="${(b.name||b.fullName||'').toLowerCase()}">
           <td>${b.name || b.fullName || 'Unnamed'}</td>
           <td>${b.phone || '—'}</td>
           <td>${b.city || b.state || '—'}</td>
           <td>${_timeAgo(b.createdAt)}</td>
-        </tr>
-      `).join('');
+          <td><span class="status-pill ${suspended ? 'status-suspended' : 'status-approved'}">${suspended ? 'Suspended' : 'Active'}</span></td>
+          <td><div class="row-actions">${suspendAction}<button class="act-btn act-view" onclick="openBuyerOrdersModal('${b._id}','${(b.name||b.fullName||'this buyer').replace(/'/g,"\\'")}')">🧾 Orders</button><button class="act-btn act-reject" onclick="openDeleteModal('${b._id}','${(b.name||b.fullName||'this buyer').replace(/'/g,"\\'")}','buyers')">🗑 Delete</button></div></td>
+        </tr>`;
+      }).join('');
     }
 
     function filterTable(which, query) {
@@ -1185,14 +1248,15 @@
 
     // ── Suspend / Reactivate ──
     // ADJUST IF NEEDED: assumed routes are PUT /sellers/:id/suspend and PUT /sellers/:id/reactivate
-    let _suspendId = null, _suspendAction = null;
-    function openSuspendModal(id, name, action) {
-      _suspendId = id; _suspendAction = action;
+    let _suspendId = null, _suspendAction = null, _suspendType = 'sellers';
+    function openSuspendModal(id, name, action, type) {
+      _suspendId = id; _suspendAction = action; _suspendType = type || 'sellers';
       const isSuspend = action === 'suspend';
-      document.getElementById('suspend-modal-title').textContent = isSuspend ? 'Suspend Shop' : 'Reactivate Shop';
+      const noun = _suspendType === 'buyers' ? 'Buyer' : 'Shop';
+      document.getElementById('suspend-modal-title').textContent = (isSuspend ? 'Suspend ' : 'Reactivate ') + noun;
       document.getElementById('suspend-modal-text').textContent = isSuspend
-        ? `Suspend "${name}"? Their shop will be hidden from buyers until reactivated.`
-        : `Reactivate "${name}"? Their shop will become visible to buyers again.`;
+        ? `Suspend "${name}"? ${_suspendType === 'buyers' ? 'They will be locked out until reactivated.' : 'Their shop will be hidden from buyers until reactivated.'}`
+        : `Reactivate "${name}"? ${_suspendType === 'buyers' ? 'They will be able to log in again.' : 'Their shop will become visible to buyers again.'}`;
       document.getElementById('suspend-confirm-btn').textContent = isSuspend ? 'Suspend' : 'Reactivate';
       document.getElementById('suspend-confirm-btn').style.background = isSuspend ? '#e74c3c' : '#16803C';
       document.getElementById('suspend-modal').classList.add('open');
@@ -1200,13 +1264,107 @@
     function closeSuspendModal() { document.getElementById('suspend-modal').classList.remove('open'); _suspendId = null; }
     async function submitSuspendToggle() {
       try {
-        const res = await fetch(_API + '/sellers/' + _suspendId + '/' + _suspendAction, { method: 'PUT', headers: _headers() });
+        const res = await fetch(_API + '/' + _suspendType + '/' + _suspendId + '/' + _suspendAction, { method: 'PUT', headers: _headers() });
         if (!res.ok) throw new Error('Request failed');
-        showToastSafe(_suspendAction === 'suspend' ? 'Shop suspended.' : 'Shop reactivated ✅', _suspendAction === 'suspend' ? 'info' : 'success');
+        const noun = _suspendType === 'buyers' ? 'Buyer' : 'Shop';
+        showToastSafe(_suspendAction === 'suspend' ? noun + ' suspended.' : noun + ' reactivated ✅', _suspendAction === 'suspend' ? 'info' : 'success');
         closeSuspendModal();
+        if (_suspendType === 'buyers') loadBuyers(); else loadSellers();
+      } catch (e) {
+        showToastSafe('Could not update status — check that /' + _suspendType + '/:id/' + _suspendAction + ' exists on your backend.', 'error');
+      }
+    }
+
+    // ── DELETE (sellers or buyers) — typed-name confirmation since this is irreversible ──
+    let _deleteId = null, _deleteType = null;
+    function openDeleteModal(id, name, type) {
+      _deleteId = id; _deleteType = type;
+      document.getElementById('delete-modal-name').textContent = name;
+      document.getElementById('delete-confirm-input').value = '';
+      document.getElementById('delete-confirm-input').dataset.expected = name;
+      document.getElementById('delete-modal').classList.add('open');
+    }
+    function closeDeleteModal() { document.getElementById('delete-modal').classList.remove('open'); _deleteId = null; }
+    async function submitDelete() {
+      const input = document.getElementById('delete-confirm-input');
+      if (input.value.trim() !== input.dataset.expected) {
+        showToastSafe('Please type the name exactly to confirm.', 'warning');
+        return;
+      }
+      try {
+        const res = await fetch(_API + '/' + _deleteType + '/' + _deleteId, { method: 'DELETE', headers: _headers() });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Request failed');
+        showToastSafe(data.message || 'Deleted.', 'success');
+        closeDeleteModal();
+        if (_deleteType === 'buyers') loadBuyers(); else loadSellers();
+      } catch (e) {
+        showToastSafe(e.message || 'Could not delete — check your backend is up to date.', 'error');
+      }
+    }
+
+    // ── VIEW BUYER ORDERS ──
+    async function openBuyerOrdersModal(id, name) {
+      document.getElementById('buyer-orders-name').textContent = name;
+      document.getElementById('buyer-orders-body').innerHTML = '<p style="text-align:center;color:var(--white-dim);padding:20px;">Loading…</p>';
+      document.getElementById('buyer-orders-modal').classList.add('open');
+      try {
+        const res = await fetch(_API + '/buyers/' + id + '/orders', { headers: _headers() });
+        const data = await res.json();
+        const orders = data.orders || [];
+        if (!orders.length) {
+          document.getElementById('buyer-orders-body').innerHTML = '<p style="text-align:center;color:var(--white-dim);padding:20px;">No orders from this buyer yet.</p>';
+          return;
+        }
+        document.getElementById('buyer-orders-body').innerHTML = orders.map(o => `
+          <div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;font-size:0.82rem;font-weight:700;margin-bottom:4px;">
+              <span>${o.orderId}</span><span class="status-pill status-${o.status==='completed'?'approved':o.status==='new'?'pending':'approved'}">${o.status}</span>
+            </div>
+            <div style="font-size:0.78rem;color:var(--white-dim);">${o.sellerName || 'Unknown shop'} · ₦${Number(o.total||0).toLocaleString()} · ${_timeAgo(o.createdAt)}</div>
+          </div>
+        `).join('');
+      } catch (e) {
+        document.getElementById('buyer-orders-body').innerHTML = '<p style="text-align:center;color:var(--white-dim);padding:20px;">Could not load orders.</p>';
+      }
+    }
+    function closeBuyerOrdersModal() { document.getElementById('buyer-orders-modal').classList.remove('open'); }
+
+    // ── EDIT SELLER (admin correcting a shop's details) ──
+    function openEditSellerModal(id) {
+      const s = allSellers.find(x => x._id === id);
+      if (!s) return;
+      document.getElementById('edit-seller-id').value = s._id;
+      document.getElementById('edit-seller-name').value = s.businessName || '';
+      document.getElementById('edit-seller-category').value = s.category || '';
+      document.getElementById('edit-seller-state').value = s.state || '';
+      document.getElementById('edit-seller-city').value = s.city || '';
+      document.getElementById('edit-seller-address').value = s.address || '';
+      document.getElementById('edit-seller-whatsapp').value = s.whatsappNumber || '';
+      document.getElementById('edit-seller-desc').value = s.description || '';
+      document.getElementById('edit-seller-modal').classList.add('open');
+    }
+    function closeEditSellerModal() { document.getElementById('edit-seller-modal').classList.remove('open'); }
+    async function submitEditSeller() {
+      const id = document.getElementById('edit-seller-id').value;
+      const body = {
+        businessName:   document.getElementById('edit-seller-name').value.trim(),
+        category:       document.getElementById('edit-seller-category').value.trim(),
+        state:          document.getElementById('edit-seller-state').value.trim(),
+        city:           document.getElementById('edit-seller-city').value.trim(),
+        address:        document.getElementById('edit-seller-address').value.trim(),
+        whatsappNumber: document.getElementById('edit-seller-whatsapp').value.trim(),
+        description:    document.getElementById('edit-seller-desc').value.trim(),
+      };
+      try {
+        const res = await fetch(_API + '/sellers/' + id, { method: 'PUT', headers: _headers(), body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Request failed');
+        showToastSafe('Shop updated ✅', 'success');
+        closeEditSellerModal();
         loadSellers();
       } catch (e) {
-        showToastSafe('Could not update status — check that /sellers/:id/' + _suspendAction + ' exists on your backend.', 'error');
+        showToastSafe(e.message || 'Could not save changes.', 'error');
       }
     }
 
