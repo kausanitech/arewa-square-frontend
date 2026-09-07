@@ -684,9 +684,9 @@
     </a>
 
     <div class="sidebar-user">
-      <div class="user-avatar">AM</div>
+      <div class="user-avatar" id="sidebar-avatar">–</div>
       <div class="user-info">
-        <span>Abubakar Musa</span>
+        <span id="sidebar-name">Loading…</span>
         <span>🛒 Buyer Account</span>
       </div>
     </div>
@@ -737,7 +737,7 @@
         </button>
         <div class="topbar-left">
           <h1 id="page-title">Buyer Dashboard</h1>
-          <p id="page-sub">Welcome back, Abubakar 👋</p>
+          <p id="page-sub">Welcome back 👋</p>
         </div>
       </div>
       <div class="topbar-right">
@@ -1603,37 +1603,59 @@
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
     // Init — load real data, then request GPS for distance sorting
-    // ── PROFILE (real data via AS.buyer.*) ──
+    // ── PROFILE (real data via the app's normal _API/fetch pattern) ──
     async function loadProfile() {
-      if (!AS.getToken() || AS.getRole() !== 'buyer') return; // guest browsing — nothing to load
-      const res = await AS.buyer.getProfile();
-      if (!res.success) { showToast(res.message || 'Could not load your profile.', 'error'); return; }
-      const b = res.buyer;
-      const fullName = b.user?.fullName || '';
-      const initials = fullName.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('') || '?';
-      const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
-      document.getElementById('profile-avatar').textContent = initials;
-      document.getElementById('profile-name').textContent = fullName || 'Buyer';
-      document.getElementById('profile-joined').textContent = b.createdAt ? 'Member since ' + new Date(b.createdAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : '';
-      set('profile-fullname', fullName);
-      set('profile-email', b.user?.email);
-      set('profile-phone', b.user?.phone);
-      set('profile-city', b.city);
-      const stateSelect = document.getElementById('profile-state');
-      if (stateSelect && b.state) stateSelect.value = b.state;
+      if (!localStorage.getItem('as_token') || localStorage.getItem('as_role') !== 'buyer') return; // guest browsing — nothing to load
+      try {
+        const res = await fetch(_API + '/buyers/me', { headers: _headers() });
+        const data = await res.json();
+        if (!res.ok) { showToast(data.message || 'Could not load your profile.', 'error'); return; }
+        const b = data.buyer;
+        const fullName = b.user?.fullName || '';
+        const initials = fullName.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('') || '?';
+        const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+
+        // Profile settings tab
+        document.getElementById('profile-avatar').textContent = initials;
+        document.getElementById('profile-name').textContent = fullName || 'Buyer';
+        document.getElementById('profile-joined').textContent = b.createdAt ? 'Member since ' + new Date(b.createdAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : '';
+        set('profile-fullname', fullName);
+        set('profile-email', b.user?.email);
+        set('profile-phone', b.user?.phone);
+        set('profile-city', b.city);
+        const stateSelect = document.getElementById('profile-state');
+        if (stateSelect && b.state) stateSelect.value = b.state;
+
+        // Sidebar header + welcome greeting — previously hardcoded to a
+        // placeholder name, now shows the real logged-in buyer everywhere.
+        const sidebarAvatar = document.getElementById('sidebar-avatar');
+        const sidebarName = document.getElementById('sidebar-name');
+        const pageSub = document.getElementById('page-sub');
+        if (sidebarAvatar) sidebarAvatar.textContent = initials;
+        if (sidebarName) sidebarName.textContent = fullName || 'Buyer';
+        if (pageSub) pageSub.textContent = 'Welcome back, ' + (fullName.split(' ')[0] || 'there') + ' 👋';
+      } catch (e) {
+        showToast('Could not load your profile. Check your connection.', 'error');
+      }
     }
 
     async function saveProfile() {
       const city = document.getElementById('profile-city')?.value || '';
       const state = document.getElementById('profile-state')?.value || '';
-      const res = await AS.buyer.updateProfile({ city, state });
-      if (res.success) showToast('Profile saved!', 'success');
-      else showToast(res.message || 'Could not save profile.', 'error');
+      try {
+        const res = await fetch(_API + '/buyers/profile', { method: 'PUT', headers: _headers(), body: JSON.stringify({ city, state }) });
+        const data = await res.json();
+        if (res.ok) showToast('Profile saved!', 'success');
+        else showToast(data.message || 'Could not save profile.', 'error');
+      } catch (e) {
+        showToast('Connection error. Please try again.', 'error');
+      }
     }
 
     loadShops();
     requestGPS();
     loadProfile();
+
 
     /* ── TOAST NOTIFICATION SYSTEM ── */
     function showToast(message, type) {
