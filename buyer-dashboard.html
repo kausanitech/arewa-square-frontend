@@ -439,7 +439,7 @@
       border-radius: 7px; overflow: hidden;
     }
     .product-img {
-      height: 70px; background: linear-gradient(135deg, var(--green-mid), var(--green-light));
+      height: 90px; background: linear-gradient(135deg, var(--green-mid), var(--green-light));
       display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
       overflow: hidden; position: relative;
     }
@@ -1415,7 +1415,7 @@
         ? (s.dist < 1 ? Math.round(s.dist * 1000) + 'm' : s.dist.toFixed(1) + 'km') + ' away'
         : (s.loc || 'Location unavailable');
       return `<div class="shop-card" onclick="openModal('${s._id}')">
-        <div class="shop-thumb">${s.photo ? `<img src="${s.photo}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">` : s.icon}<span class="shop-num">${_formatShopNum(s.num)}</span><span class="verified-pill">✅ Verified</span></div>
+        <div class="shop-thumb">${s.photo ? `<img src="${s.photo}" alt="${s.name}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'" loading="lazy">` : s.icon}<span class="shop-num">${_formatShopNum(s.num)}</span><span class="verified-pill">✅ Verified</span></div>
         <div class="shop-body">
           <h4>${s.name}</h4>
           <div class="shop-meta-row"><span>🏷️ ${s.cat}</span><span>📍 ${s.loc}</span></div>
@@ -1540,7 +1540,7 @@
         const inCart = cart.items.find(i => i.name === p.name);
         const hasMultiple = p.images.length > 1;
         return `<div class="product-card">
-          <div class="product-img" ${p.images.length > 0 ? `onclick="event.stopPropagation(); openProductGallery(${idx})" style="cursor:pointer;"` : ''}>${p.image ? `<img src="${p.image}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentNode.textContent='${p.icon}'">` : p.icon}${hasMultiple ? `<span class="product-img-count">📷 ${p.images.length}</span>` : ''}</div>
+          <div class="product-img" ${p.images.length > 0 ? `onclick="event.stopPropagation(); openProductGallery(${idx})" style="cursor:pointer;"` : ''}>${p.image ? `<img src="${p.image}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentNode.textContent='${p.icon}'" loading="lazy">` : p.icon}${hasMultiple ? `<span class="product-img-count">📷 ${p.images.length}</span>` : ''}</div>
           <div class="product-info">
             <p>${p.name}</p>
             <strong>${formatPrice(p.price)}</strong>

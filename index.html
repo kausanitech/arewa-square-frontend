@@ -1257,7 +1257,7 @@
       font-size: 2.4rem;
       overflow: hidden;
     }
-    .rec-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .rec-thumb img { width: 100%; height: 100%; object-fit: contain; }
     .rec-save {
       position: absolute; top: 8px; right: 8px;
       width: 26px; height: 26px; border-radius: 50%;
@@ -2044,7 +2044,7 @@
           : `<span class="shop-distance">📍 ${s.city ? s.city + ', ' : ''}${s.state || ''}</span>`;
 
         const banner = s.shopPhotoUrl
-          ? `<img src="${s.shopPhotoUrl}" alt="${s.businessName}" style="width:100%;height:100%;object-fit:cover;border-radius:8px 8px 0 0;" onerror="this.style.display='none'"/>`
+          ? `<img src="${s.shopPhotoUrl}" alt="${s.businessName}" style="width:100%;height:100%;object-fit:contain;border-radius:8px 8px 0 0;" onerror="this.style.display='none'" loading="lazy"/>`
           : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.5rem;">${_shopIcon(s.category)}</div>`;
 
         return `<div class="shop-card">
@@ -2084,7 +2084,7 @@
           ? (s.distance < 1 ? Math.round(s.distance * 1000) + 'm' : s.distance.toFixed(1) + 'km')
           : (s.city || s.state || '');
         const thumb = s.shopPhotoUrl
-          ? `<img src="${s.shopPhotoUrl}" alt="${s.businessName || ''}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"/>`
+          ? `<img src="${s.shopPhotoUrl}" alt="${s.businessName || ''}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'" loading="lazy"/>`
           : _shopIcon(s.category);
         return `<div class="nearby-item" onclick="goToShop('${s._id}')">
           <span class="nearby-index">${String(i + 1).padStart(2, '0')}</span>
@@ -2198,7 +2198,7 @@
         }
         grid.innerHTML = flat.map(p => {
           const thumb = (p.images && p.images[0])
-            ? `<img src="${p.images[0]}" alt="${p.name}" onerror="this.parentNode.innerHTML='${_shopIcon(p.category)}'"/>`
+            ? `<img src="${p.images[0]}" alt="${p.name}" onerror="this.parentNode.innerHTML='${_shopIcon(p.category)}'" loading="lazy"/>`
             : _shopIcon(p.category);
           const price = p.price ? '₦' + Number(p.price).toLocaleString() : '';
           return `<div class="rec-card" onclick="goToShop('${p.sellerId}')">
